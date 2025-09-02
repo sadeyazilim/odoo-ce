@@ -1,0 +1,27 @@
+name: Sync ODOO -> FORK
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch: ["18.0"]
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Add upstream & fetch
+        run: |
+          git remote add upstream https://github.com/odoo/odoo.git || true
+          git fetch upstream --tags
+      - name: Mirror upstream -> FORK branch
+        run: |
+          B="${{ matrix.branch }}"
+          git checkout -B "$B" "upstream/$B"
+          git push origin "$B" --force
+      - name: Push tags (optional)
+        run: git push origin --tags || true
